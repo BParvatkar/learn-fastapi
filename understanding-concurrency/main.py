@@ -1,0 +1,75 @@
+import time
+from fastapi import FastAPI, Request
+import threading
+import os
+from datetime import datetime
+import asyncio
+
+
+app = FastAPI()
+
+
+def custom_log(message="", request_id=None):
+    thread = threading.current_thread()
+    thread_id = thread.ident
+    thread_name = thread.name
+    pid = os.getpid()
+    now = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+    print(
+        f"{now}, Pid:{pid} Thread id: {thread_id}, thread_name: ${thread_name}, message: {message}"
+    )
+
+
+# @app.middleware("http")
+# def log_request_info(request: Request, call_next):
+#     custom_log("middleware call")
+#     response = call_next(request)
+#     return response
+
+@app.middleware("http")
+async def log_request_info(request: Request, call_next):
+    custom_log("middleware call")
+    response = await call_next(request)
+    return response
+
+
+def get_data():
+    time.sleep(1)
+    return {"foo": "bar"}
+
+
+async def async_get_data():
+    await asyncio.sleep(1)
+    return {"foo": "bar"}
+
+
+async def async_with_sync_get_data():
+    time.sleep(1)
+    return {"foo": "bar"}
+
+
+@app.get("/sync-request")
+def sync_request(request: Request):
+    request_id = request.headers.get("X-Request-ID")
+    custom_log("(async-request) before get_data", request_id)
+    response = get_data()
+    custom_log("(async-request) after get_data", request_id)
+    return response
+
+
+@app.get("/async-request")
+async def async_request(request: Request):
+    request_id = request.headers.get("X-Request-ID")
+    custom_log("(async-request) before get_data", request_id)
+    response = await async_get_data()
+    custom_log("(async-request) after get_data", request_id)
+    return response
+
+
+@app.get("/async-with-block-request")
+async def async_request_with_sync_blocker(request: Request):
+    request_id = request.headers.get("X-Request-ID")
+    custom_log("(async-with-block-request) before get_data", request_id)
+    response = await async_with_sync_get_data()
+    custom_log("(async-with-block-request) after get_data", request_id)
+    return response
