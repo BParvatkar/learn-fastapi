@@ -26,6 +26,12 @@ def custom_log(message="", request_id=None):
 #     response = call_next(request)
 #     return response
 
+@app.middleware("http")
+async def log_request_info(request: Request, call_next):
+    custom_log("middleware call")
+    response = await call_next(request)
+    return response
+
 
 def get_data():
     time.sleep(1)
@@ -63,7 +69,7 @@ async def async_request(request: Request):
 @app.get("/async-with-block-request")
 async def async_request_with_sync_blocker(request: Request):
     request_id = request.headers.get("X-Request-ID")
-    custom_log("(async-request) before get_data", request_id)
+    custom_log("(async-with-block-request) before get_data", request_id)
     response = await async_with_sync_get_data()
-    custom_log("(async-request) after get_data", request_id)
+    custom_log("(async-with-block-request) after get_data", request_id)
     return response
