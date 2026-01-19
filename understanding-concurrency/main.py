@@ -9,7 +9,7 @@ import asyncio
 app = FastAPI()
 
 
-def custom_log(message="", request_id=None):
+def custom_log(message=""):
     thread = threading.current_thread()
     thread_id = thread.ident
     thread_name = thread.name
@@ -49,27 +49,24 @@ async def async_with_sync_get_data():
 
 
 @app.get("/sync-request")
-def sync_request(request: Request):
-    request_id = request.headers.get("X-Request-ID")
-    custom_log("(async-request) before get_data", request_id)
+def sync_request():
+    custom_log("(async-request) before get_data")
     response = get_data()
-    custom_log("(async-request) after get_data", request_id)
+    custom_log("(async-request) after get_data")
     return response
 
 
 @app.get("/async-request")
-async def async_request(request: Request):
-    request_id = request.headers.get("X-Request-ID")
-    custom_log("(async-request) before get_data", request_id)
+async def async_request():
+    custom_log("(async-request) before get_data")
     response = await async_get_data()
-    custom_log("(async-request) after get_data", request_id)
+    custom_log("(async-request) after get_data")
     return response
 
 
 @app.get("/async-with-block-request")
-async def async_request_with_sync_blocker(request: Request):
-    request_id = request.headers.get("X-Request-ID")
-    custom_log("(async-with-block-request) before get_data", request_id)
+async def async_request_with_sync_blocker():
+    custom_log("(async-with-block-request) before get_data")
     response = await async_with_sync_get_data()
-    custom_log("(async-with-block-request) after get_data", request_id)
+    custom_log("(async-with-block-request) after get_data")
     return response
