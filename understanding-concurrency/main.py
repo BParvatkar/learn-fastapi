@@ -1,12 +1,22 @@
+from contextlib import asynccontextmanager
 import time
 from fastapi import FastAPI, Request
 import threading
 import os
 from datetime import datetime
 import asyncio
+import anyio
 
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    limiter = anyio.to_thread.current_default_thread_limiter()
+    limiter.total_tokens = 100
+    yield
+    limiter.total_tokens = 40
+
+app = FastAPI(lifespan=lifespan)
 
 
 def custom_log(message=""):
@@ -31,7 +41,6 @@ async def log_request_info(request: Request, call_next):
     custom_log("middleware call")
     response = await call_next(request)
     return response
-
 
 def get_data():
     time.sleep(1)
